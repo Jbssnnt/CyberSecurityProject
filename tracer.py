@@ -18,9 +18,8 @@ else:
 
 pidlist = []
 ppidlist = []
-os.system('ps -ef > process.txt')
-fileobj = open('process.txt', 'r')
-lines = fileobj.readlines()
+proc = os.popen('ps -ef', 'r')
+lines = proc.readlines()
 for line in lines:
     words = line.split()
     if words[1].isdigit():
@@ -28,22 +27,22 @@ for line in lines:
     if words[2].isdigit():
         ppidlist.append(words[2])
 
-'''i = 0    
+i = 0    
 for pid in pidlist:
     if pid == '1' or pid == '3':
         print("Will not strace pid: " + pid)
     else:
         if ppidlist[i] == '1' or ppidlist[i] == '3':
-            cmd = "timeout 15 strace -q -ff -o piddetails.txt -p " + pid + " &"
+            cmd = "timeout 10 strace -ff -o piddetails.txt -p " + pid + " "
             os.system(cmd)
     i = i + 1
-'''
-#time.sleep(11)
+
+time.sleep(11)
 callType = []
 occur = []
+outfile = open('results.txt', 'w')
 p = os.popen('ls', 'r')
 lines = p.readlines()
-print(lines)
 for line in lines:
     if line[0:9] == 'piddetail':
         fileobj = open(line[:-1], 'r')
@@ -56,11 +55,11 @@ for line in lines:
                     occur.append(int(1))
                 else:
                     occur[callType.index(calls[0])] += 1
-        print('-------------------------------------------------------------')
-        print('Calls by PID ' + line[15:])
-        print('Calls   | CallType\n')
+        outfile.write('--------------------------------------------------\n')
+        outfile.write('Calls by PID ' + line[15:] + '\n')
+        outfile.write('Calls   | CallType\n\n')
         for i in range(0, len(occur)):
-            print('{0:7d}'.format(occur[i]), end = " | ")
-            print(callType[i])
+            outfile.write('{0:7d} |'.format(occur[i]))
+            outfile.write(callType[i] + '\n')
 
-os.system('rm process.txt')
+os.system("rm -f pid*")
