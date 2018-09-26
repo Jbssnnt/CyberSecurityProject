@@ -2,40 +2,23 @@ import os
 import sys
 import time
 
-p = os.popen('ls /usr/bin/ | grep \"^strace$\"', 'r')
-line = p.readline()
-if line == "strace\n":
-    print("You have strace")
-else:
-    print("Go get strace")
-    exit()
-
-if(os.getuid() == 0):
-    print("Running in sudo")
-else:
-    print("Running with lower privileges not recommended, refer to manual")
-    exit()
+# if(os.getuid() == 0):
+#     print("Running in sudo")
+# else:
+#     print("Running with lower privileges not recommended, refer to manual")
+#     exit()
 
 pidlist = []
-ppidlist = []
 proc = os.popen('ps -ef', 'r')
 lines = proc.readlines()
-for line in lines:
+for line in lines[1:]:
     words = line.split()
-    if words[1].isdigit():
+    if words[7][0] != '[':
         pidlist.append(words[1])
-    if words[2].isdigit():
-        ppidlist.append(words[2])
 
-i = 0    
 for pid in pidlist:
-    if pid == '1' or pid == '3':
-        print("Will not strace pid: " + pid)
-    else:
-        if ppidlist[i] == '1' or ppidlist[i] == '3':
-            cmd = "timeout 10 strace -ff -o piddetails.txt -p " + pid + " "
-            os.system(cmd)
-    i = i + 1
+    cmd = "timeout 10 python strace.py -f -o piddetails.txt." + str(pid) + " -p " + str(pid) + " &"
+    os.system(cmd)
 
 time.sleep(11)
 callType = []
@@ -61,5 +44,7 @@ for line in lines:
         for i in range(0, len(occur)):
             outfile.write('{0:7d} |'.format(occur[i]))
             outfile.write(callType[i] + '\n')
+    callType = []
+    occur = []
 
 os.system("rm -f pid*")
