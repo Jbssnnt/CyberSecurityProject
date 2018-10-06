@@ -6,6 +6,15 @@ Created on Sat Oct  6 21:11:29 2018
 """
 
 
+
+##
+##
+## NOTE:
+##  Apparently, you cannot just run the Listdlls.exe
+##  It requires you to accept a licening agreement before it will work!
+##
+##
+
 from subprocess import Popen, PIPE
 import psutil
 
