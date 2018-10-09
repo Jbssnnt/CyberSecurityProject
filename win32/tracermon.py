@@ -6,11 +6,16 @@ Last updated on Tue Oct  9 20:22:33 2018
 """
 
 # NOTE: msvcr100.dll and msvcp100.dll are required for NtTrace.exe
-from subprocess import Popen, PIPE
+#from subprocess import Popen, PIPE
 import psutil
 import time
+import os
 
 
+#make sure the working directory exists
+workingDirectory = ".\\working\\"
+if not os.path.exists(workingDirectory):
+    os.makedirs(workingDirectory)
 
 index=0
 array_process = []
@@ -56,7 +61,7 @@ counter = counter + 1 #theres a better way to do this, i dont remember how
 
 #run process monitor (from sysinternals)
 ##DEBUG: Procmon.exe /NoFilter /AcceptEula /BackingFile C:\temp\output.pml
-process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", "output.pml"]) ## or to a fixed path: "C:\\temp\\output.pml"])
+process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", workingDirectory+"output.pml"]) ## or to a fixed path: "C:\\temp\\output.pml"])
 
 #process = Popen(["Listdlls.exe", "5008", ""], stdout=PIPE)
 #(output, err) = process.communicate()
@@ -78,8 +83,15 @@ time.sleep(10)
 
 #convert into usable format
 ##DEBUG: Procmon.exe /NoFilter /AcceptEula /OpenLog C:\temp\output.pml /SaveAs C:\temp\output.csv
-process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\output.pml", "/SaveAs", "output.csv"]) ## or to a fixed path: "C:\\temp\\output.csv"])
+process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\output.pml", "/SaveAs", workingDirectory+"output.csv"]) ## or to a fixed path: "C:\\temp\\output.csv"])
 
 #process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\output.pml", "/SaveAs", "C:\\temp\\output.xml"])
 #process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\output.pml", "/SaveAs1", "C:\\temp\\output-stacktrace.xml"])
 #process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\output.pml", "/SaveAs2", "C:\\temp\\output-stacktracesymbols.xml"])
+
+time.sleep(10)  
+
+
+#open new file made.
+
+#read line by line and sort into individual files named via PID
