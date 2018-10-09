@@ -1,2 +1,0 @@
-APP: notepad.exe
-PID: 12456
