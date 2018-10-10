@@ -6,24 +6,22 @@ def writeSummary():
     callType = []
     occur = []
     outfile = open('TraceCallSummary.txt', 'w')
-    p = os.popen('ls /tmp/', 'r')
+    p = os.popen('ls -v /tmp/', 'r')
     lines = p.readlines()
     for line in lines:
-        if line[0:9] == 'piddetail':
+        if line[0:17] == 'TraceCallRaw.txt.':
             fileobj = open("/tmp/" + line[:-1], 'r')
             tracelines = fileobj.readlines()
             for traceline in tracelines:
                 calls = traceline.split('(')
-                if calls[0][0] != '+' and calls[0][0] != '-':
-                    if calls[0] not in callType:
-                        if calls[0][0:6] != 'Attach' and calls[0][0] == '[':
-                            callType.append(calls[0])
-                            occur.append(int(1))
-                    else:
-                        occur[callType.index(calls[0])] += 1
+                if calls[0] not in callType:
+                        callType.append(calls[0])
+                        occur.append(int(1))
+                else:
+                    occur[callType.index(calls[0])] += 1
             outfile.write('--------------------------------------------------\n')
-            outfile.write('Calls by PID ' + line[15:] + '\n')
-            outfile.write('Calls   | CallType\n\n')
+            outfile.write('Calls by PID ' + line[17:-1] + '\n')
+            outfile.write('Calls   | CallType\n')
             for i in range(0, len(occur)):
                 outfile.write('{0:7d} | '.format(occur[i]))
                 outfile.write(callType[i] + '\n')
@@ -32,14 +30,14 @@ def writeSummary():
 
 def writeRawData():
     outfile = open('TraceCallRaw.txt', 'w')
-    p = os.popen('ls /tmp/', 'r')
+    p = os.popen('ls -v /tmp/', 'r')
     lines = p.readlines()
     for line in lines:
-        if line[0:9] == 'piddetail':
+        if line[0:17] == 'TraceCallRaw.txt.':
             fileobj = open("/tmp/" + line[:-1], 'r')
             tracelines = fileobj.readlines()
             for traceline in tracelines:
-                outfile.write(traceline)
+                outfile.write('[' + line[17:-1] + '] ' + traceline)
 
 def main():
     if(os.getuid() != 0):
@@ -56,9 +54,11 @@ def main():
             pidlist.append(words[1])
 
     # execute the strace program for each PID, catching all processes
+    cmd = "timeout " + sys.argv[1] + " strace -q -ff -o /tmp/TraceCallRaw.txt"
     for pid in pidlist:
-        cmd = "timeout " + sys.argv[1] + " python strace.py -f -o /tmp/piddetails.txt." + str(pid) + " -p " + str(pid) + " &"
-        os.system(cmd)
+        cmd = cmd + " -p " + str(pid)
+    cmd = cmd + " &"
+    out = os.popen(cmd)
 
     time.sleep(int(sys.argv[1]))
 
