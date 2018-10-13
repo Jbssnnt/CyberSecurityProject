@@ -112,10 +112,10 @@ time.sleep(10)
 #this is a different way
 #read the outputted file as a CSV via pandas library
 output = pd.read_csv(workingDirectory+"noexplorernopromon.CSV", na_values=['.'])
-
+"""
 array_name_command = []
 newPID = False
-"""
+
 print("sorting started: "+ str(datetime.datetime.now()))
 for i in range (0, len(output)):
     newPID=False
@@ -176,27 +176,35 @@ if match plus one cound
 """
 print("sorting starting: "+ str(datetime.datetime.now()))
 
+#broo = np.array(["test1"]["test2"])
+
 PIDs=[]
 pending=True
 for i in range (0, len(output)):
+    PIDs_String = output['PID'][i]
     #print(">loop number:"+str(i) + " and PID:"+ str( output['PID'][i]) )
     #print(PIDs)
     
     #array is empty, add the first PID
     if( len(PIDs) == 0):
-        PIDs.append( output['PID'][i] )
+            PIDs.append([])
+            PIDs[0].append( PIDs_String )
     else:
-        
         for j in range (0, len(PIDs)):
-            if(output['PID'][i] != PIDs[j] ):
+            #print("j:"+str(j))
+            if(PIDs_String != PIDs[j][0] ):
                 #print("new PID -- adding to array")
                 pending=True
             else:
+                #The PIDs match, so increase the counter to show that this specific all has been used multiple times
                 #print("dont add PID")
                 pending=False
+                
                 break
         if(pending==True):
-             PIDs.append( output['PID'][i] )
+            PIDs.append([])
+            PIDs[j+1].append( PIDs_String )
+            #PIDs_List.extend( str(output['Operation'][i])  )
         
 
 
