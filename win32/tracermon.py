@@ -182,13 +182,19 @@ PIDs=[]
 pending=True
 for i in range (0, len(output)):
     PIDs_String = output['PID'][i]
+    PIDs_Op = output['Operation'][i]
     #print(">loop number:"+str(i) + " and PID:"+ str( output['PID'][i]) )
     #print(PIDs)
     
     #array is empty, add the first PID
     if( len(PIDs) == 0):
-            PIDs.append([])
-            PIDs[0].append( PIDs_String )
+            PIDs.append([]) #initiate array
+            PIDs[0].append( PIDs_String ) #add first PID
+            PIDs[0].append( str(output['Operation'][i]) ) #add first PID call
+            
+            print( len(PIDs[0]) )
+            print( (PIDs[0][0]) )
+            print( (PIDs[0][1]) )
     else:
         for j in range (0, len(PIDs)):
             #print("j:"+str(j))
@@ -198,9 +204,17 @@ for i in range (0, len(output)):
             else:
                 #The PIDs match, so increase the counter to show that this specific all has been used multiple times
                 #print("dont add PID")
-                pending=False
+
+# FIX ME HERE. This is not working correctly, should add the Op only if its not in there. Right now its an infinite loop :)                
+#                for k in range (1, len(PIDs[j]) ):
+#                    if( PIDs[j][k] != PIDs_Op):
+#                        PIDs[j].append( str(output['Operation'][i]) )
                 
+                #we dont need to check any more PIDs. STOP!
+                pending=False
                 break
+            
+        #add new PID to our array
         if(pending==True):
             PIDs.append([])
             PIDs[j+1].append( PIDs_String )
@@ -229,5 +243,6 @@ for i in range (0, len(output)):
 #
 #read line by line and sort into individual files named via PID
 #
-print(PIDs)
+            
+"""print(PIDs)"""
 print("sorting complete: "+ str(datetime.datetime.now()))
