@@ -5,7 +5,6 @@ Last updated on Tue Oct  9 20:22:33 2018
 @author: overlord00
 """
 
-# NOTE: msvcr100.dll and msvcp100.dll are required for NtTrace.exe
 from subprocess import Popen
 import psutil
 import time
@@ -23,9 +22,9 @@ workingDirectory = ".\\working\\"
 if not os.path.exists(workingDirectory):
     os.makedirs(workingDirectory)
     
-if not os.path.exists(workingDirectory+timestamp):
-    os.makedirs(workingDirectory+timestamp)
-
+#if not os.path.exists(workingDirectory+timestamp):
+#    os.makedirs(workingDirectory+timestamp)
+"""
 index=0
 array_process = []
 #array_proc_name = []
@@ -101,7 +100,7 @@ process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimize
 
 #wait for the conversion....
 time.sleep(10)  
-
+"""
 
 #open new file made.
 #this is the pythonic way to do it without opening a HUGE file.
@@ -112,12 +111,14 @@ time.sleep(10)
 
 #this is a different way
 #read the outputted file as a CSV via pandas library
-output = pd.read_csv(workingDirectory+"output.csv", na_values=['.'])
+output = pd.read_csv(workingDirectory+"noexplorernopromon.CSV", na_values=['.'])
 
 array_name_command = []
-
+newPID = False
+"""
 print("sorting started: "+ str(datetime.datetime.now()))
 for i in range (0, len(output)):
+    newPID=False
     #print("!")
     #print(output['Process Name'][i])
     #print(i)
@@ -125,25 +126,100 @@ for i in range (0, len(output)):
     #    array_name_command.append(output['PID'][i])
         #create file 
         
-    if( i % 10000 == 0):
-        print(" - - working - - ")
+    print(str(i)+"--"+str(len(array_name_command)))
     
-    #dump line to file
-    #print(output)
+    #if the array is empty, put the first thing in it
+    if( len(array_name_command) == 0):
+        #array_name_command[0] = str(output['PID'][i])
+        array_name_command.append( str(output['PID'][i]) )
+        print("2-"+str(len(array_name_command)))
+    else:
+        for j in range (0, len(array_name_command)):
+            #print("Start:"+str(j))
+        #    print("yo")
+            #print("PID:"+str(output['PID'][i]))
+            if( str(output['PID'][i]) == str(array_name_command[j]) ):
+                #check to see if the Operation has happened before
+                #if yes, add to tally,
+                #if no, add to array
+                zzz=0
+                print("OLD PID")
+                #print("3-"+str(len(array_name_command))+"-"+str(output['PID'][i]))
+                #print("3-"+str(len(array_name_command))+"-"+str(array_name_command[j]))
+                
+            else:
+                print("NEW PID")
+                #newPID = True
+                array_name_command.append( str(output['PID'][i]) )
+                j = len(array_name_command)+1
 
-    #"PID","Operation","Path","Result","Detail"
-    with open(workingDirectory+timestamp+"\\"+str(output['PID'][i])+".txt", "a") as myfile:
-        #myfile.write(str(output['PID'][i])) 
-        myfile.write('"' + #str(output['PID'][i])    + '", "' + 
-                     str(output['Operation'][i])    + '", "' + 
-                     str(output['Path'][i])         + '", "' + 
-                     str(output['Result'][i])       + '", "' + 
-                     str(output['Detail'][i])       +  ##invalid symbols. unicode error. please fix
-                     '"\n' )
+            #    #array_name_command[j] = str(output['PID'][i]
+                #array_name_command.append( str(output['PID'][i]) )
+            #j = j+1 #hack
+            #    print("4-"+str(len(array_name_command)))
+            #else:
+            #    print("adding to already array")
+            #print("End:"+str(j))
+#        if(newPID==True):
+#            array_name_command.append( str(output['PID'][i]) )
+#            newPID=False
+"""
+"""
+read the array into memory
+go per line
+check pid
+if no match, add to array
+if match check if the line matches
+if not add to secondarty array 
+if match plus one cound
+
+"""
+print("sorting starting: "+ str(datetime.datetime.now()))
+
+PIDs=[]
+pending=True
+for i in range (0, len(output)):
+    #print(">loop number:"+str(i) + " and PID:"+ str( output['PID'][i]) )
+    #print(PIDs)
+    
+    #array is empty, add the first PID
+    if( len(PIDs) == 0):
+        PIDs.append( output['PID'][i] )
+    else:
+        
+        for j in range (0, len(PIDs)):
+            if(output['PID'][i] != PIDs[j] ):
+                #print("new PID -- adding to array")
+                pending=True
+            else:
+                #print("dont add PID")
+                pending=False
+                break
+        if(pending==True):
+             PIDs.append( output['PID'][i] )
+        
 
 
-
-
+#    if( i % 10000 == 0):
+#        print(" - - working - - ")
+#    
+#    #dump line to file
+#    #print(output)
+#
+#    #"PID","Operation","Path","Result","Detail"
+#    with open(workingDirectory+timestamp+"\\"+str(output['PID'][i])+".txt", "a") as myfile:
+#        #myfile.write(str(output['PID'][i])) 
+#        myfile.write('"' + #str(output['PID'][i])    + '", "' + 
+#                     str(output['Operation'][i])    + '", "' + 
+#                     str(output['Path'][i])         + '", "' + 
+#                     str(output['Result'][i])       + '", "' + 
+#                     str(output['Detail'][i])       +  ##invalid symbols. unicode error. please fix
+#                     '"\n' )
+#
+#
+#
+#
 #read line by line and sort into individual files named via PID
-
+#
+print(PIDs)
 print("sorting complete: "+ str(datetime.datetime.now()))
