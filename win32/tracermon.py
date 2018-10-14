@@ -180,9 +180,11 @@ print("sorting starting: "+ str(datetime.datetime.now()))
 
 PIDs=[]
 pending=True
+syscall_exists=True
 for i in range (0, len(output)):
     PIDs_String = output['PID'][i]
-    PIDs_Op = output['Operation'][i]
+    PIDs_Exe    = output['Process Name'][i]
+    PIDs_Op     = output['Operation'][i]
     #print(">loop number:"+str(i) + " and PID:"+ str( output['PID'][i]) )
     #print(PIDs)
     
@@ -190,11 +192,9 @@ for i in range (0, len(output)):
     if( len(PIDs) == 0):
             PIDs.append([]) #initiate array
             PIDs[0].append( PIDs_String ) #add first PID
-            PIDs[0].append( str(output['Operation'][i]) ) #add first PID call
-            
-            print( len(PIDs[0]) )
-            print( (PIDs[0][0]) )
-            print( (PIDs[0][1]) )
+            PIDs[0].append( str( PIDs_Exe ) ) #add first PID name for future reference
+            PIDs[0].append( str( PIDs_Op ) ) #add first PID call
+            PIDs[0].append( 1 ) #add first counter for syscall
     else:
         for j in range (0, len(PIDs)):
             #print("j:"+str(j))
@@ -202,13 +202,20 @@ for i in range (0, len(output)):
                 #print("new PID -- adding to array")
                 pending=True
             else:
-                #The PIDs match, so increase the counter to show that this specific all has been used multiple times
-                #print("dont add PID")
-
-# FIX ME HERE. This is not working correctly, should add the Op only if its not in there. Right now its an infinite loop :)                
-#                for k in range (1, len(PIDs[j]) ):
-#                    if( PIDs[j][k] != PIDs_Op):
-#                        PIDs[j].append( str(output['Operation'][i]) )
+                #The PIDs exists in our array, so increase the counter to show that this specific all has been used multiple times           
+                for k in range (2, len(PIDs[j]), 2):
+                    
+                    if( PIDs[j][k] != PIDs_Op):
+                        syscall_exists=False
+                    else:
+                        #PIDs[j].append( str(output['Operation'][i]) )
+                        #print("same" + str( PIDs[j][k+1] ) )
+                        PIDs[j][k+1] = PIDs[j][k+1] + 1
+                        syscall_exists=True
+                        break
+                if(syscall_exists==False):                    
+                    PIDs[j].append( str( PIDs_Op ) ) #add new PID call
+                    PIDs[j].append( 1 ) #add counter for new syscall
                 
                 #we dont need to check any more PIDs. STOP!
                 pending=False
@@ -219,6 +226,9 @@ for i in range (0, len(output)):
             PIDs.append([])
             PIDs[j+1].append( PIDs_String )
             #PIDs_List.extend( str(output['Operation'][i])  )
+            PIDs[j+1].append( str( PIDs_Exe ) ) #add new PID name for future reference
+            PIDs[j+1].append( str( PIDs_Op ) ) #add new PID call
+            PIDs[j+1].append( 1 ) #add counter for new syscall
         
 
 
