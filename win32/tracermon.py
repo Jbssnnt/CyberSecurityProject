@@ -10,19 +10,19 @@ import psutil
 import time
 import os
 import pandas as pd
-#import numpy as np
 import datetime
 import sys
 
 # - - - - - - - - - -
 
 #wait for Procmon.exe and/or Procmon64.exe to finalise before continuing.
-def wait_for_process():
+def wait_for_process(proc1, proc2):
     continued = True
     while continued:
         continued=False 
         for proc in psutil.process_iter():
-            if( proc.name() == "Procmon.exe" or proc.name() == "Procmon64.exe" ):
+            #if( proc.name() == "Procmon.exe" or proc.name() == "Procmon64.exe" ):
+            if( proc.name() == proc1 or proc.name() == proc2 ):
                 #print("still open. waiting...")
                 continued = True
         time.sleep(2) 
@@ -36,6 +36,16 @@ def get_PID_dlls( PID ):
     print(output)
     print(err)
     print(exit_code)
+    
+# - - - - - - - - - -
+
+def cleanup():
+    for proc in psutil.process_iter():
+        # check whether the process name matches
+        if proc.name() == "Listdlls.exe":
+            proc.kill()
+        if proc.name() == "Listdlls64.exe":
+            proc.kill()
 
 # - - - - - - - - - -
 
@@ -51,14 +61,16 @@ def bigfunc( runtime ):
         
     if not os.path.exists(workingDirectory+timestamp):
         os.makedirs(workingDirectory+timestamp)
+        
+    print("\nCapturing all calls...\n")
     
-    #make sure there's not already something running in the background.
+    #make sure there's not already something running in the background. - gracefully close the program
     try:
         process = Popen(["Procmon.exe", "/Terminate"])
     except:
         zzz=0 #do nothing
     else:
-        wait_for_process()
+        wait_for_process("Procmon.exe", "Procmon64.exe")
 
     ##runs listdlls.exe with argument from previously
     
@@ -66,27 +78,43 @@ def bigfunc( runtime ):
     ##DEBUG: Procmon.exe /NoFilter /AcceptEula /BackingFile C:\temp\raw.pml
     process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", workingDirectory+timestamp+"\\"+"raw.pml"]) ## or to a fixed path: "C:\\temp\\raw.pml"])
     
-    #process = Popen(["Listdlls.exe", "5008", ""], stdout=PIPE)
-    #(output, err) = process.communicate()
-    #exit_code = process.wait()
-    #print(output)
-    #print(err)
-    #print(exit_code)
+
+    timestamp_dll_start = datetime.datetime.now()
+    print("list dlls start: " + str( timestamp_dll_start ))
+    #while thats running, lets get a list of all dlls
+    DLLSprocess = Popen(["Listdlls.exe" ], stdout=PIPE)
+    (DLLSoutput, err) = DLLSprocess.communicate()
+    DLLSsplitoutput = str(DLLSoutput).split("\\r\\n")    
+    timestamp_dll_end = datetime.datetime.now()
+    print("list dlls end :  " + str( timestamp_dll_end ))
     
+    timestamp_dll_runtime = timestamp_dll_end-timestamp_dll_start
+    print (timestamp_dll_runtime)
     
-    #gather data for x seconds
-    time.sleep( runtime )   
+    if ( float(timestamp_dll_runtime.seconds) > float(runtime)):
+        #took a little longer than expected. sorry.
+        #print("took a little longer than expected")
+        zzz=0
+    else:
+        #print("all good bro, still wait")
+        #print("still gotta wait", float(runtime) - float(timestamp_dll_runtime.seconds), "seconds")
+        #gather data for x seconds
+        #timestamp_sleep_start = datetime.datetime.now()
+        #print("sleep end start: " + str( timestamp_sleep_start ))
+        time.sleep( float(runtime) - float(timestamp_dll_runtime.seconds) )   
+        #timestamp_sleep_end = datetime.datetime.now()
+        #print("sleep end time : " + str( timestamp_sleep_end ))
+        #print (timestamp_sleep_end-timestamp_sleep_start)
+        
+        
     
     #after sleeping, close the procmon app
     ##DEBUG: Procmon.exe /Terminate
     process = Popen(["Procmon.exe", "/Terminate"])
     
+    wait_for_process("Procmon.exe", "Procmon64.exe")
     
-    
-    wait_for_process()
-    
-    
-    
+    print("Converting raw output to CSV...\n")
     
     #make sure the file is closed before trying to read it. :)
     #time.sleep(10)  
@@ -102,9 +130,37 @@ def bigfunc( runtime ):
     #process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\raw.pml", "/SaveAs2", "C:\\temp\\output-stacktracesymbols.xml"])
     
 
-    wait_for_process()
+    wait_for_process("Procmon.exe", "Procmon64.exe")
+    #wait_for_process("Listdlls.exe", "Listdlls64.exe")
     
+    print("continuing...\n")
     
+    #checks for DLLs running
+    dll_show_pid = False
+    dll_list=[]
+    dll_index = -1 #har har, gotta start here so we can actually start at 0
+    #put all the dll calls into a simple array/list for laters
+    for outs in DLLSsplitoutput:
+        #check to see if we want to capture the output
+        if( ".exe pid: " in outs):
+            dll_show_pid = True
+            dll_index = dll_index+1
+        
+        #check for invalid entries
+        if( "Error opening " in outs 
+           or outs == "------------------------------------------------------------------------------"
+           or outs == "'"):
+            dll_show_pid = False
+            
+        #if we do, put into a new array
+        if(dll_show_pid == True):
+            #print(outs)
+            if( ".exe pid: " in outs):
+                splitline = outs.split(' ')
+                dll_list.append([]) #add new item to our array-list
+                dll_list[dll_index].append( splitline[-1] )
+            else:
+                dll_list[dll_index].append( outs )       
     
     #this is a different way
     #read the outputted file as a CSV via pandas library
@@ -194,66 +250,32 @@ def bigfunc( runtime ):
                     PIDs_User  = str(per_value)
                     myfile.write("User: "+ PIDs_User +"\n")
                     myfile.write("------------------------------\n")
-                    myfile.write("Syscall:   |   Times called: \n")
+                    myfile.write("   call:   |   times called: \n")
                     myfile.write("------------------------------\n")
                 else:
-                    
+
                     myfile.write( str(per_value) )
                     if(index%2==0):
                         myfile.write("\n")
                     else:
                         myfile.write(" : ")
-                        
-                        
-                        
-            
-            #myfile.write("------------------------------\n")
-            #myfile.write("DLLs used:\n")
-            
-            
 
-        
-            #if ("NT AUTHORITY\SYSTEM" in PIDs_User  or  PIDs_User=="None"):
-            #    zzz=0
-            #else:
-            if(True):
-                ##runs listdlls.exe with argument from previously
-                process = Popen(["Listdlls.exe", PIDs_String], stdout=PIPE)
-                #process = Popen(["Listdlls.exe", "5008", ""], stdout=PIPE)
-                (output, err) = process.communicate()
-                #exit_code = process.wait()
-                #print(output)
-                #print(err)
-                #print(exit_code)
-                
-                newoutput = str(output).split("\\r\\n")
-                #array_dlls.append(newoutput)
-                
-                if ("Error opening" in newoutput[5]  or  "No matching processes were found." in newoutput[5]):
-                    #print("ERROR--")
-                    #print(PIDs_User)
-                    #print(newoutput[5])
-                    #myfile.write("Unable to list DLLs\n")
-                    zzz=0 #do nothing
-                else:
-                    
+            for index,per_value in enumerate(dll_list):
+                if( per_value[0] == PIDs_String):  
                     myfile.write("------------------------------\n")
                     myfile.write("DLLs used:\n")
-            
-                    #print("GOOD")
-                    #print(currentUSR)
-                    #print(newoutput)
-                    for index,outs in enumerate(newoutput):
-                        #print(index, outs, len(newoutput))
-                        if(index > 8 and index < len(newoutput)-1 ): #and index != len(newoutput)
-                            myfile.write(outs)
+                    for count,zxc in enumerate(per_value):
+                        if(count > 2):
+                            myfile.write(zxc)
                             myfile.write("\n")
                     myfile.write("\n")            
             myfile.write("\n\n\n")
-            
-            
-            
+
     print("DEBUG: writing complete: "+ str(datetime.datetime.now()))
+    
+    #make sure stuff isnt running on completion.
+    cleanup()
+
 
 # - - - - - - - - - -
 #  M  A  I  N
