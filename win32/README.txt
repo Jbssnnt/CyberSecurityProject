@@ -18,7 +18,23 @@ Once the application has run its course, you can find all the information from t
 
 Each folder will contain several files, including a ‘raw.pml’ which contains raw-unreadable information, an ‘output.csv’ which contains all the captured data in a comma separated value style output, and a ‘statistics.txt’ which contains an overview of all calls and accompanying DLLs.
 
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+BUGS:
+Occasionally I got a bug where the DLL output method would just freeze for no reason. While trying to debug this the problem went away.
+For now, I've added some debug output in the form of some work in progress dots. The output should hopefully look something like this:
+> Capturing all calls...
+>
+> list dlls start: 2018-11-03 12:33:33.543341
+> .
+> ..
+> None
+> ...
+> list dlls end :  2018-11-03 12:33:44.879626
+If the output sits for longer than 5 or 10 seconds on the first single dot, then something has gone wrong somewhere, somehow, and the process must be manually killed before the program will continue. Via Windows Task Manager, look for a process called 'ListDlls.exe' and/or 'ListDlls64.exe' and end the task.
+(Note: the 'None' indicates no error)
+
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 Authors Notes:
 The statistics output is not sorted by PID at this time. They are listed in the order that they appear in the RAW output and the CSV output. I am not sure if this is an issue at this time, but I did not think it necessary or worth the extra in-program time/cycles.

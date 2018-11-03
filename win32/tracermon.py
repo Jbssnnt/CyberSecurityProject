@@ -72,7 +72,7 @@ def bigfunc( runtime ):
     else:
         wait_for_process("Procmon.exe", "Procmon64.exe")
 
-    ##runs listdlls.exe with argument from previously
+    timestamp_procmon_start = datetime.datetime.now()
     
     #run process monitor (from sysinternals)
     ##DEBUG: Procmon.exe /NoFilter /AcceptEula /BackingFile C:\temp\raw.pml
@@ -83,13 +83,19 @@ def bigfunc( runtime ):
     print("list dlls start: " + str( timestamp_dll_start ))
     #while thats running, lets get a list of all dlls
     DLLSprocess = Popen(["Listdlls.exe" ], stdout=PIPE)
+    print(".")
     (DLLSoutput, err) = DLLSprocess.communicate()
+    print("..")
+    print(err)
     DLLSsplitoutput = str(DLLSoutput).split("\\r\\n")    
+    print("...")
     timestamp_dll_end = datetime.datetime.now()
     print("list dlls end :  " + str( timestamp_dll_end ))
     
     timestamp_dll_runtime = timestamp_dll_end-timestamp_dll_start
-    print (timestamp_dll_runtime)
+    #print (timestamp_dll_runtime)
+    #timestamp_dll_runtime2 = timestamp_dll_end-timestamp_procmon_start
+    #print (timestamp_dll_runtime2)
     
     if ( float(timestamp_dll_runtime.seconds) > float(runtime)):
         #took a little longer than expected. sorry.
@@ -114,7 +120,7 @@ def bigfunc( runtime ):
     
     wait_for_process("Procmon.exe", "Procmon64.exe")
     
-    print("Converting raw output to CSV...\n")
+    print("\nConverting raw output to CSV...\n")
     
     #make sure the file is closed before trying to read it. :)
     #time.sleep(10)  
