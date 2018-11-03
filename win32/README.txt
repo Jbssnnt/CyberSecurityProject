@@ -46,6 +46,9 @@ Because of the way windows is compared to Linux, it was initially difficult to g
 I happened on my current solution after dismissing it earlier. Microsoft’s ‘Process Monitor’ is a beautiful GUI based program that captures calls made by the system and displays them for you in a nice little package. This was not what I was looking for however, needing a streamlined CLI-style implementation. Eventually, I learned that it could be run in a minimal fashion and its contents output in just the right way with some command line trickery.
 With the gift of hindsight, I would have taken a much different approach to this project. While there is no perfect Windows solution, a DIY solution would likely have been possible given various Microsoft debugging tools and many hours of reading, debugging and possibly reverse-engineering of the Ntdll.dll among other things.
 
+After tweaking and testing I have realised a misstep I have taken, I am only checking for DLL usage at the start of the application running. For an extended run, with things being open and accessed in teh background, more DLLs and other applications may be loaded, and this is not taken into account.
+In a future revision of this application, I would run this at the start (as it is now) and at the end, and during also, giving you a good safety net of all things running.
+
 I hope the solution that I have come up with will suit the short term needs of the client.
 
 

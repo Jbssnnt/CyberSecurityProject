@@ -12,6 +12,7 @@ import os
 import pandas as pd
 import datetime
 import sys
+import platform
 
 # - - - - - - - - - -
 
@@ -288,7 +289,7 @@ def bigfunc( runtime ):
 # - - - - - - - - - -
 
 def main():
-    
+    platf0rm = platform.system()
     runtime = 10
     try:
         runtime = int(sys.argv[1])
@@ -296,11 +297,13 @@ def main():
         print("No custom timeframe set, defaulting to 10 seconds.") 
     except ValueError:
         print("Non-numeric value set, defaulting to 10 seconds.")
-       
 
-    
-    bigfunc(runtime)
-    
+    #lets do a sanity check for OS
+    if( platf0rm == "Windows"):
+        bigfunc(runtime)
+    else:
+        print("You are trying to run this application on an operating system that is not currently supported. Exiting...")
+
 # - - - - - - - - - -
 if __name__ == "__main__":
     main()
