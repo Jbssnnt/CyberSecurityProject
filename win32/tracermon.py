@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Last updated on Fri Oct 26 00:00:00 2018
+Last updated on Nov 05 00:00:00 2018
 
 @author: overlord00
 """
@@ -87,17 +87,18 @@ def bigfunc( runtime, filesetuptype ):
     
 
     timestamp_dll_start = datetime.datetime.now()
-    print("list dlls start: " + str( timestamp_dll_start ))
+    #print("list dlls start: " + str( timestamp_dll_start ))
     #while thats running, lets get a list of all dlls
 
-    DLLSsplitoutput = []
-    with os.popen('ListDlls.exe') as cmd:
+    DLLSoutput = []
+    with os.popen('ListDlls.exe -accepteula') as cmd:
         for line in cmd:
             #print(line)
-            DLLSsplitoutput.append(line)
+            #DLLSoutput.append(line)
+            DLLSoutput.append(line.rstrip()) #remove newline characters
             
     timestamp_dll_end = datetime.datetime.now()
-    print("list dlls end :  " + str( timestamp_dll_end ))
+    #print("list dlls end :  " + str( timestamp_dll_end ))
     
     timestamp_dll_runtime = timestamp_dll_end-timestamp_dll_start
     #print (timestamp_dll_runtime)
@@ -118,7 +119,17 @@ def bigfunc( runtime, filesetuptype ):
         #timestamp_sleep_end = datetime.datetime.now()
         #print("sleep end time : " + str( timestamp_sleep_end ))
         #print (timestamp_sleep_end-timestamp_sleep_start)
-
+    
+    """
+    #old method, which would hang for no reason at communicate()
+    DLLSprocess = Popen(["Listdlls.exe" ], stdin=PIPE, stdout=PIPE)
+    print(".")
+    (DLLSoutput, err) = DLLSprocess.communicate()
+    print(".")
+    DLLSsplitoutput = str(DLLSoutput).split("\\r\\n")    
+    print(".")
+    """
+    
     #after sleeping, close the procmon app
     ##DEBUG: Procmon.exe /Terminate
     process = Popen(["Procmon.exe", "/Terminate"])
@@ -151,7 +162,7 @@ def bigfunc( runtime, filesetuptype ):
     dll_list=[]
     dll_index = -1 #har har, gotta start here so we can actually start at 0
     #put all the dll calls into a simple array/list for laters
-    for outs in DLLSsplitoutput:
+    for outs in DLLSoutput:
         #check to see if we want to capture the output
         if( ".exe pid: " in outs):
             dll_show_pid = True
