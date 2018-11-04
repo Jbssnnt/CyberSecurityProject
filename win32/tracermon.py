@@ -31,7 +31,7 @@ def wait_for_process(proc1, proc2):
 # - - - - - - - - - -
 
 def get_PID_dlls( PID ):
-    process = Popen([exepath+"Listdlls.exe", PID], stdout=PIPE)
+    process = Popen(["Listdlls.exe", PID], stdout=PIPE)
     (output, err) = process.communicate()
     exit_code = process.wait()
     print(output)
@@ -58,7 +58,6 @@ def bigfunc( runtime, filesetuptype ):
 
     #make sure the working directory exists
     workingDirectory = dir_path+"\\working\\"
-    exepath = dir_path+"\\"
     if not os.path.exists(workingDirectory):
         os.makedirs(workingDirectory)
  
@@ -74,46 +73,29 @@ def bigfunc( runtime, filesetuptype ):
     
     #make sure there's not already something running in the background. - gracefully close the program
     try:
-        process = Popen([exepath+"Procmon.exe", "/Terminate"])
+        process = Popen(["Procmon.exe", "/Terminate"])
     except:
         zzz=0 #do nothing
     else:
-        wait_for_process(exepath+"Procmon.exe", "Procmon64.exe")
+        wait_for_process("Procmon.exe", "Procmon64.exe")
 
     #timestamp_procmon_start = datetime.datetime.now()
     
     #run process monitor (from sysinternals)
     ##DEBUG: Procmon.exe /NoFilter /AcceptEula /BackingFile C:\temp\raw.pml
-    process = Popen([exepath+"Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", workingDirectory+timestamp+"\\"+"raw.pml"])
+    process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", workingDirectory+timestamp+"\\"+"raw.pml"])
     
 
     timestamp_dll_start = datetime.datetime.now()
     print("list dlls start: " + str( timestamp_dll_start ))
     #while thats running, lets get a list of all dlls
-    DLLSprocess = Popen([exepath+"Listdlls.exe" ], stdin=PIPE, stdout=PIPE)
-    #print(".")
-    
-    
-    ### HAVING AN ISSUE RIGHT HERE. SOMETIMES IT HANGS FOR NO REASON!!!!
-    
-    try:
-        print("try")
-        (DLLSoutput, err) = DLLSprocess.communicate()
-    except:
-        print("except - something went wrong???")
-        cleanup()
-    else:
-        print("else-no problemo-continuing")
-        #wait_for_process(exepath+"Procmon.exe", "Procmon64.exe")    
-    
-    
-    
-    
-    
-    #print("..")
-    #print(err)
-    DLLSsplitoutput = str(DLLSoutput).split("\\r\\n")    
-    #print("...")
+
+    DLLSsplitoutput = []
+    with os.popen('ListDlls.exe') as cmd:
+        for line in cmd:
+            #print(line)
+            DLLSsplitoutput.append(line)
+            
     timestamp_dll_end = datetime.datetime.now()
     print("list dlls end :  " + str( timestamp_dll_end ))
     
@@ -136,14 +118,12 @@ def bigfunc( runtime, filesetuptype ):
         #timestamp_sleep_end = datetime.datetime.now()
         #print("sleep end time : " + str( timestamp_sleep_end ))
         #print (timestamp_sleep_end-timestamp_sleep_start)
-        
-        
-    
+
     #after sleeping, close the procmon app
     ##DEBUG: Procmon.exe /Terminate
-    process = Popen([exepath+"Procmon.exe", "/Terminate"])
+    process = Popen(["Procmon.exe", "/Terminate"])
     
-    wait_for_process(exepath+"Procmon.exe", "Procmon64.exe")
+    wait_for_process("Procmon.exe", "Procmon64.exe")
     
     print("\nConverting raw output to CSV...\n")
     
@@ -153,7 +133,7 @@ def bigfunc( runtime, filesetuptype ):
     
     #convert into usable format
     ##DEBUG: Procmon.exe /NoFilter /AcceptEula /OpenLog C:\temp\raw.pml /SaveAs C:\temp\output.csv
-    process = Popen([exepath+"Procmon.exe", "/AcceptEula", "/LoadConfig", exepath+"config.pmc", "/SaveApplyFilter", "/Quiet", "/Minimized", "/OpenLog", workingDirectory+timestamp+"\\"+"raw.pml", "/SaveAs", workingDirectory+timestamp+"\\"+"output.csv"]) 
+    process = Popen(["Procmon.exe", "/AcceptEula", "/LoadConfig", "config.pmc", "/SaveApplyFilter", "/Quiet", "/Minimized", "/OpenLog", workingDirectory+timestamp+"\\"+"raw.pml", "/SaveAs", workingDirectory+timestamp+"\\"+"output.csv"]) 
     #we use /LoadConfig ProcmonConfiguration.pmc and /SaveApplyFilter to filter out instances of ProcMon for speed
     
     #process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\raw.pml", "/SaveAs",  "C:\\temp\\output.xml"])
