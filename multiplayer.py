@@ -11,8 +11,8 @@ Multi-platform python starter.
 
 import platform
 
-import win32.tracermon as tim
-#import linuxtracer as liam
+
+
 
 
 print( platform.system() )
@@ -20,9 +20,10 @@ print( platform.system() )
 platf0rm = platform.system()
 
 if( platf0rm == "Windows"):
-    tim.main( "multi" )
+    import win32.tracermon as tim
+    tim.main()
 elif( platf0rm == "Linux"):
-    print("do liam func here :)")
-    #liam.main()
+    import tracer as liam
+    liam.main()
 else:
     print("You are trying to run this application on an operating system that is not currently supported. Exiting...")

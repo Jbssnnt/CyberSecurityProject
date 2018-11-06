@@ -26,7 +26,7 @@ def wait_for_process(proc1, proc2):
             if( proc.name() == proc1 or proc.name() == proc2 ):
                 #print("still open. waiting...")
                 continued = True
-        time.sleep(2) 
+        #time.sleep(2) 
 
 # - - - - - - - - - -
 
@@ -50,14 +50,15 @@ def cleanup():
 
 # - - - - - - - - - -
 
-def bigfunc( runtime, filesetuptype ):
+#def bigfunc( runtime, filesetuptype ):
+def bigfunc( runtime ):
     timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
     print("Current date and time: " , timestamp)
-    dir_path = os.path.dirname(os.path.realpath(__file__))
+    dir_path = os.path.dirname(os.path.realpath(__file__)) + "\\"
     
 
     #make sure the working directory exists
-    workingDirectory = dir_path+"\\working\\"
+    workingDirectory = dir_path+"working\\"
     if not os.path.exists(workingDirectory):
         os.makedirs(workingDirectory)
  
@@ -65,15 +66,15 @@ def bigfunc( runtime, filesetuptype ):
     if not os.path.exists(workingDirectory+timestamp):
         os.makedirs(workingDirectory+timestamp)
         
-    print("\nCapturing all calls...\n")
-    
+    print("Capturing all calls...\n")
+        
     #print(dir_path)           #debug path
     #print(filesetuptype)      # single/multi
     #print(exepath)            #debug path
     
     #make sure there's not already something running in the background. - gracefully close the program
     try:
-        process = Popen(["Procmon.exe", "/Terminate"])
+        process = Popen([dir_path+"Procmon.exe", "/Terminate"])
     except:
         zzz=0 #do nothing
     else:
@@ -83,7 +84,8 @@ def bigfunc( runtime, filesetuptype ):
     
     #run process monitor (from sysinternals)
     ##DEBUG: Procmon.exe /NoFilter /AcceptEula /BackingFile C:\temp\raw.pml
-    process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", workingDirectory+timestamp+"\\"+"raw.pml"])
+    process = Popen([dir_path+"Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/BackingFile", workingDirectory+timestamp+"\\"+"raw.pml"])
+
     
 
     timestamp_dll_start = datetime.datetime.now()
@@ -91,7 +93,7 @@ def bigfunc( runtime, filesetuptype ):
     #while thats running, lets get a list of all dlls
 
     DLLSoutput = []
-    with os.popen('ListDlls.exe -accepteula') as cmd:
+    with os.popen(dir_path+'ListDlls.exe -accepteula') as cmd:
         for line in cmd:
             #print(line)
             #DLLSoutput.append(line)
@@ -132,11 +134,12 @@ def bigfunc( runtime, filesetuptype ):
     
     #after sleeping, close the procmon app
     ##DEBUG: Procmon.exe /Terminate
-    process = Popen(["Procmon.exe", "/Terminate"])
+    process = Popen([dir_path+"Procmon.exe", "/Terminate"])
     
     wait_for_process("Procmon.exe", "Procmon64.exe")
     
-    print("\nConverting raw output to CSV...\n")
+    print("Converting raw output to CSV...")
+    print("(Depending on time run and programs open, it may take a while)\n")
     
     #make sure the file is closed before trying to read it. :)
     #time.sleep(10)  
@@ -144,7 +147,7 @@ def bigfunc( runtime, filesetuptype ):
     
     #convert into usable format
     ##DEBUG: Procmon.exe /NoFilter /AcceptEula /OpenLog C:\temp\raw.pml /SaveAs C:\temp\output.csv
-    process = Popen(["Procmon.exe", "/AcceptEula", "/LoadConfig", "config.pmc", "/SaveApplyFilter", "/Quiet", "/Minimized", "/OpenLog", workingDirectory+timestamp+"\\"+"raw.pml", "/SaveAs", workingDirectory+timestamp+"\\"+"output.csv"]) 
+    process = Popen([dir_path+"Procmon.exe", "/AcceptEula", "/LoadConfig", dir_path+"config.pmc", "/SaveApplyFilter", "/Quiet", "/Minimized", "/OpenLog", workingDirectory+timestamp+"\\"+"raw.pml", "/SaveAs", workingDirectory+timestamp+"\\"+"output.csv"]) 
     #we use /LoadConfig ProcmonConfiguration.pmc and /SaveApplyFilter to filter out instances of ProcMon for speed
     
     #process = Popen(["Procmon.exe", "/AcceptEula", "/NoFilter", "/Quiet", "/Minimized", "/OpenLog", "C:\\temp\\raw.pml", "/SaveAs",  "C:\\temp\\output.xml"])
@@ -155,7 +158,7 @@ def bigfunc( runtime, filesetuptype ):
     wait_for_process("Procmon.exe", "Procmon64.exe")
     #wait_for_process("Listdlls.exe", "Listdlls64.exe")
     
-    print("continuing...\n")
+    #print("continuing...\n")
     
     #checks for DLLs running
     dll_show_pid = False
@@ -188,7 +191,7 @@ def bigfunc( runtime, filesetuptype ):
     #read the outputted file as a CSV via pandas library
     output = pd.read_csv(workingDirectory+timestamp+"\\"+"output.CSV", na_values=['.'])
     
-    print("DEBUG: sorting starting: "+ str(datetime.datetime.now()))
+    print("Sorting statistics...")
     
     
     PIDs=[]
@@ -249,13 +252,14 @@ def bigfunc( runtime, filesetuptype ):
         #get_PID_dlls( PIDs_String )
                
     
-    print("DEBUG: sorting complete: "+ str(datetime.datetime.now()))
+    #print("DEBUG: sorting complete: "+ str(datetime.datetime.now()))
     
     
     
     #now write this to file nicely
-    print("DEBUG: writing starting: "+ str(datetime.datetime.now()))
+    print("Writing statistics to file")
     
+    temp = "temp"
     #with open(workingDirectory+timestamp+"\\"+"\\" +"output_for_.txt", "a", "utf-8") as myfile:
     with open(workingDirectory+timestamp+"\\"+"statistics.txt", "w") as myfile:
         #myfile.write(str(PIDs))
@@ -271,20 +275,24 @@ def bigfunc( runtime, filesetuptype ):
                 elif(index==2):
                     PIDs_User  = str(per_value)
                     myfile.write("User: "+ PIDs_User +"\n")
-                    myfile.write("------------------------------\n")
-                    myfile.write("   call:   |   times called: \n")
-                    myfile.write("------------------------------\n")
+                    myfile.write("-------------------------------\n")
+                    myfile.write("Times Called | System Call Name\n")
+                    myfile.write("-------------------------------\n")
+                elif(index==3):
+                    temp =  str(per_value) 
                 else:
-
-                    myfile.write( str(per_value) )
+                    #myfile.write( str(per_value) )
                     if(index%2==0):
+                        myfile.write( '{0:12d}'.format(int(per_value) ) )
+                        myfile.write(" : ")
+                        myfile.write( str(temp) )
                         myfile.write("\n")
                     else:
-                        myfile.write(" : ")
+                        temp =  str(per_value) 
 
             for index,per_value in enumerate(dll_list):
                 if( per_value[0] == PIDs_String):  
-                    myfile.write("------------------------------\n")
+                    myfile.write("-------------------------------\n")
                     myfile.write("DLLs used:\n")
                     for count,zxc in enumerate(per_value):
                         if(count > 2):
@@ -293,7 +301,7 @@ def bigfunc( runtime, filesetuptype ):
                     myfile.write("\n")            
             myfile.write("\n\n\n")
 
-    print("DEBUG: writing complete: "+ str(datetime.datetime.now()))
+    #print("DEBUG: writing complete: "+ str(datetime.datetime.now()))
     
     #make sure stuff isnt running on completion.
     cleanup()
@@ -303,12 +311,9 @@ def bigfunc( runtime, filesetuptype ):
 #  M  A  I  N
 # - - - - - - - - - -
 
-def main( filesetuptype ):
+def main( ):
     platf0rm = platform.system()
     runtime = 10
-    #print(filesetuptype) 
-    
-    cleanup() #try to prevent this stupid bug
 
     try:
         runtime = int(sys.argv[1])
@@ -316,13 +321,16 @@ def main( filesetuptype ):
         print("No custom timeframe set, defaulting to 10 seconds.") 
     except ValueError:
         print("Non-numeric value set, defaulting to 10 seconds.")
+    else:
+        print("Running for ", runtime, "seconds.")
 
     #lets do a sanity check for OS
     if( platf0rm == "Windows"):
-        bigfunc(runtime, filesetuptype)
+        #bigfunc(runtime, filesetuptype)
+        bigfunc( runtime )
     else:
         print("You are trying to run this application on an operating system that is not currently supported. Exiting...")
 
 # - - - - - - - - - -
 if __name__ == "__main__":
-    main( "single" )
+    main( )
